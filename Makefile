@@ -5,7 +5,6 @@ data/TOY:
 data/PROMISE12:
 
 # Extraction and slicing
-data/PROMISE12/train/gt data/PROMISE12/val/gt: data/PROSTATE
 data/PROMISE12: data/promise12
 	rm -rf $@_tmp
 	python3 slice_promise.py --source_dir $< --dest_dir $@_tmp
