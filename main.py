@@ -147,7 +147,6 @@ def runTraining(args):
             else:
                 ce_val = partial_ce(segment_prob, weak_mask)
                 log_ce[j] = ce_val.item()
-                lossEpoch = ce_val
 
                 sizeLoss_val = sizeLoss(segment_prob, bounds)
                 log_sizeloss[j] = sizeLoss_val.item()
@@ -160,7 +159,7 @@ def runTraining(args):
             tq_iter.set_postfix({"DSC": f"{log_dice[:j+1].mean():05.3f}",
                                  "SizeDiff": f"{log_sizediff[:j+1].mean():07.1f}",
                                  "LossCE": f"{log_ce[:j+1].mean():5.2e}",
-                                 "LossSize": f"{log_sizeloss[:j+1].mean():5.2e}"})
+                                 **({"LossSize": f"{log_sizeloss[:j+1].mean():5.2e}"} if args.mode == 'constrained' else {})})
             tq_iter.update(1)
         tq_iter.close()
 
