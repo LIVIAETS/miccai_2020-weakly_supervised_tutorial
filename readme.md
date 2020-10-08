@@ -8,6 +8,14 @@ This repository contains the code of the hand-on tutorial, that runs on two data
 * A very simple toy example
 * [PROMISE12](https://promise12.grand-challenge.org) prostate segmentation challenge
 
+The goal here is to enforce some inequality constraints on the size of the predicted segmentation in the form:
+```
+lower bound <= predicted size <= upper bound
+```
+where `predicted size` is the sum of all predicted probabilities (softmax) over the whole image.
+
+To make the example simpler, we will define the lower and upper bounds to 0.9 and 1.1 times the ground truth size.
+
 #### Requirements
 The code has those following dependencies:
 ```

@@ -34,6 +34,12 @@ class PartialCrossEntropy(CrossEntropy):
 # ######## ------ Size loss function  (naive way) ---------- ###########
 # --- This function will push the prediction to be close ot sizeGT ---#
 class NaiveSizeLoss():
+    """
+    This one implement the naive quadratic penalty
+    penalty = 0                  if a <= pred_size
+              (a - pred_size)^2  otherwise
+    """
+
     def __init__(self, **kwargs):
         # Self.idk is used to filter out some classes of the target mask. Use fancy indexing
         self.idk = [1]

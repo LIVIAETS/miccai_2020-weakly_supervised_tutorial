@@ -7,7 +7,6 @@ def convBatch(nin, nout, kernel_size=3, stride=1, padding=1, bias=False, layer=n
     return nn.Sequential(
         layer(nin, nout, kernel_size=kernel_size, stride=stride, padding=padding, bias=bias, dilation=dilation),
         nn.BatchNorm2d(nout),
-        # nn.LeakyReLU(0.2)
         nn.PReLU()
     )
 
