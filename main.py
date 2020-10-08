@@ -133,16 +133,22 @@ def runTraining(args):
             log_sizediff[j] = pred_size - data["true_size"][0, 1]
             log_dice[j] = dice_coef(segment_oh, full_mask)[0, 1]  # 1st item, 2nd class
 
-            ce_val = partial_ce(segment_prob, weak_mask)
-            log_ce[j] = ce_val.item()
-
             if args.mode == 'full':
                 lossEpoch = ce(segment_prob, full_mask)
+                log_ce[j] = ce.item()
+
                 log_sizeloss[j] = 0
             elif args.mode == 'unconstrained':
+                ce_val = partial_ce(segment_prob, weak_mask)
+                log_ce[j] = ce_val.item()
                 lossEpoch = ce_val
+
                 log_sizeloss[j] = 0
             else:
+                ce_val = partial_ce(segment_prob, weak_mask)
+                log_ce[j] = ce_val.item()
+                lossEpoch = ce_val
+
                 sizeLoss_val = sizeLoss(segment_prob, bounds)
                 log_sizeloss[j] = sizeLoss_val.item()
 
