@@ -111,15 +111,20 @@ def saveImages(net, img_batch, batch_size, epoch, dataset, mode, device):
     net.eval()
 
     desc = f">> Validation ({epoch: 4d})"
-    tq_iter = tqdm_(enumerate(img_batch), desc=desc)
+
+    log_dice = torch.zeros((len(img_batch)), device=device)
+
+    tq_iter = tqdm_(enumerate(img_batch), total=len(img_batch), desc=desc)
     for j, data in tq_iter:
         img = data["img"].to(device)
         weak_mask = data["weak_mask"].to(device)
+        full_mask = data["full_mask"].to(device)
 
         logits = net(img)
         probs = F.softmax(5 * logits, dim=1)
 
         segmentation = probs2class(probs)[:, None, ...].float()
+        log_dice[j] = dice_coef(probs2one_hot(probs), full_mask)[0, 1]  # 1st item, 2nd class
 
         out = torch.cat((img, segmentation, weak_mask[:, [1], ...]))
 
@@ -131,12 +136,12 @@ def saveImages(net, img_batch, batch_size, epoch, dataset, mode, device):
                                      scale_each=False,
                                      pad_value=0)
 
-        tq_iter.set_postfix("")
+        tq_iter.set_postfix({"DSC": f"{log_dice[:j+1].mean():05.3f}"})
         tq_iter.update(1)
     tq_iter.close()
 
 
-### Metrics and thingies
+# Metrics
 def meta_dice(sum_str: str, label: Tensor, pred: Tensor, smooth: float = 1e-8) -> Tensor:
     assert label.shape == pred.shape
     assert one_hot(label)

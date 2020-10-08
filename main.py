@@ -95,7 +95,7 @@ def runTraining(args):
     print(f">>> Setting up to train on {args.dataset} with {args.mode}")
     net, optimizer, device, train_loader, val_loader = setup(args)
 
-    ce = CrossEntropy(idk=[0, 1])  # Supervise both background and foreground
+    ce_loss = CrossEntropy(idk=[0, 1])  # Supervise both background and foreground
     partial_ce = PartialCrossEntropy()  # Supervise only foregroundz
     sizeLoss = NaiveSizeLoss()
 
@@ -134,8 +134,8 @@ def runTraining(args):
             log_dice[j] = dice_coef(segment_oh, full_mask)[0, 1]  # 1st item, 2nd class
 
             if args.mode == 'full':
-                lossEpoch = ce(segment_prob, full_mask)
-                log_ce[j] = ce.item()
+                lossEpoch = ce_loss(segment_prob, full_mask)
+                log_ce[j] = lossEpoch.item()
 
                 log_sizeloss[j] = 0
             elif args.mode == 'unconstrained':
