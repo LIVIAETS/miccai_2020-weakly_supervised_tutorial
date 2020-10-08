@@ -19,7 +19,8 @@ from utils.utils import (weights_init,
                          class2one_hot,
                          probs2one_hot,
                          one_hot,
-                         tqdm_)
+                         tqdm_,
+                         dice_coef)
 
 from utils.losses import (PartialCrossEntropy,
                           NaiveSizeLoss)
@@ -99,6 +100,7 @@ def runTraining(args):
         log_ce = torch.zeros((len(train_loader)), device=device)
         log_sizeloss = torch.zeros((len(train_loader)), device=device)
         log_sizediff = torch.zeros((len(train_loader)), device=device)
+        log_dice = torch.zeros((len(train_loader)), device=device)
 
         desc = f">> Training   ({i: 4d})"
         tq_iter = tqdm_(enumerate(train_loader), total=len(train_loader), desc=desc)
@@ -114,14 +116,17 @@ def runTraining(args):
             # Sanity tests to see we loaded and encoded the data correctly
             assert 0 <= img.min() and img.max() <= 1
             B, _, W, H = img.shape
+            assert B == 1  # Since we log the values in a simple way, doesn't handle more
             assert weak_mask.shape == (B, 2, W, H)
             assert one_hot(weak_mask), one_hot(weak_mask)
 
             logits = net(img)
             segment_prob = F.softmax(5 * logits, dim=1)
+            segment_oh = probs2one_hot(segment_prob)
 
-            pred_size = einsum("bkwh->bk", probs2one_hot(segment_prob))[:, 1]
+            pred_size = einsum("bkwh->bk", segment_oh)[:, 1]
             log_sizediff[j] = pred_size - data["true_size"][0, 1]
+            log_dice[j] = dice_coef(segment_oh, full_mask)[0, 1]  # 1st item, 2nd class
 
             ce_val = partial_ce(segment_prob, weak_mask)
             log_ce[j] = ce_val.item()
@@ -138,7 +143,8 @@ def runTraining(args):
             lossEpoch.backward()
             optimizer.step()
 
-            tq_iter.set_postfix({"SizeDiff": f"{log_sizediff[:j+1].mean():07.1f}",
+            tq_iter.set_postfix({"DSC": f"{log_dice[:j+1].mean():05.3f}",
+                                 "SizeDiff": f"{log_sizediff[:j+1].mean():07.1f}",
                                  "LossCE": f"{log_ce[:j+1].mean():5.2e}",
                                  "LossSize": f"{log_sizeloss[:j+1].mean():5.2e}"})
             tq_iter.update(1)
