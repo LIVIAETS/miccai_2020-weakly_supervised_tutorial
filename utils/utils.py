@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-import os
+from pathlib import Path
 from functools import partial
 from typing import Set, Iterable, cast
 
@@ -11,14 +11,14 @@ import torch.nn.functional as F
 from tqdm import tqdm
 from torch import Tensor
 
-tqdm_ = partial(tqdm, ncols=150,
+tqdm_ = partial(tqdm, ncols=125,
                 leave=True,
                 bar_format='{l_bar}{bar}| {n_fmt}/{total_fmt} [{rate_fmt}{postfix}]')
 
 
 def weights_init(m):
     if type(m) == nn.Conv2d or type(m) == nn.ConvTranspose2d:
-        nn.init.xavier_normal(m.weight.data)
+        nn.init.xavier_normal_(m.weight.data)
     elif type(m) == nn.BatchNorm2d:
         m.weight.data.normal_(1.0, 0.02)
         m.bias.data.fill_(0)
@@ -86,11 +86,9 @@ def probs2one_hot(probs: Tensor) -> Tensor:
     return res
 
 
-def saveImages(net, img_batch, batch_size, epoch, modelName, device):
-    path = 'Results/Images/' + modelName
-
-    if not os.path.exists(path):
-        os.makedirs(path)
+def saveImages(net, img_batch, batch_size, epoch, dataset, mode, device):
+    path = Path('results/images/') / dataset / mode
+    path.mkdir(parents=True, exist_ok=True)
 
     net.eval()
 
@@ -107,8 +105,7 @@ def saveImages(net, img_batch, batch_size, epoch, modelName, device):
 
         out = torch.cat((img, segmentation, weak_mask[:, [1], ...]))
 
-        torchvision.utils.save_image(out.data, os.path.join(path,
-                                                            f"{j}_Ep_{epoch:04d}.png"),
+        torchvision.utils.save_image(out.data, path / f"{j}_Ep_{epoch:04d}.png",
                                      nrow=batch_size,
                                      padding=2,
                                      normalize=False,

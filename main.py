@@ -145,7 +145,7 @@ def runTraining(args):
         tq_iter.close()
 
         if (i % 5) == 0:
-            saveImages(net, val_loader, 1, i, args.mode, device)
+            saveImages(net, val_loader, 1, i, args.dataset, args.mode, device)
 
 
 def main():
