@@ -2,7 +2,8 @@
 
 from pathlib import Path
 from functools import partial
-from typing import Set, Iterable, cast
+from multiprocessing import Pool
+from typing import Callable, Iterable, List, Set, Tuple, TypeVar, cast
 
 import torch
 import torchvision
@@ -22,6 +23,23 @@ def weights_init(m):
     elif type(m) == nn.BatchNorm2d:
         m.weight.data.normal_(1.0, 0.02)
         m.bias.data.fill_(0)
+
+
+# Functools
+A = TypeVar("A")
+B = TypeVar("B")
+
+
+def map_(fn: Callable[[A], B], iter: Iterable[A]) -> List[B]:
+    return list(map(fn, iter))
+
+
+def mmap_(fn: Callable[[A], B], iter: Iterable[A]) -> List[B]:
+    return Pool().map(fn, iter)
+
+
+def starmmap_(fn: Callable[[Tuple[A]], B], iter: Iterable[Tuple[A]]) -> List[B]:
+    return Pool().starmap(fn, iter)
 
 
 # Assert utils

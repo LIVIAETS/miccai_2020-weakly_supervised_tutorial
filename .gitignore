@@ -2,6 +2,9 @@ result.gif
 results/
 tmp/
 
+data/promise12
+data/PROMISE12
+
 *.zip
 *.pkl
 *.tar.gz
