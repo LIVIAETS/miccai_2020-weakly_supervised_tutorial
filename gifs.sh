@@ -9,7 +9,7 @@ echo $f1 $f2
 
 rm -rf tmp/ && mkdir -p tmp/
 
-for i in $f1/0_Ep_*.png ; do
+for i in $f1/1_Ep_*.png ; do
     echo $i
     epc=`basename $i | cut -d . -f 1 | cut -d _ -f 3`
     convert $i -size 10x xc:none ${i/$f1/$f2} +append tmp/$epc.png

@@ -1,35 +1,29 @@
 #!/usr/bin/env python3
 
-import os
+from pathlib import Path
 from random import random
-from typing import Callable, Dict, Union
+from typing import Callable, Dict, List, Tuple, Union
 
 import torch
-from torch import Tensor
+from torch import Tensor, einsum
 from PIL import Image, ImageOps
 from torch.utils.data import Dataset
 
-from .utils import class2one_hot, sset
 
-
-def make_dataset(root, subset):
+def make_dataset(root, subset) -> List[Tuple[Path, Path, Path]]:
     assert subset in ['train', 'val', 'test']
-    items = []
 
-    img_path = os.path.join(root, subset, 'img')
-    mask_path = os.path.join(root, subset, 'gt')
+    root = Path(root)
 
-    images = os.listdir(img_path)
-    labels = os.listdir(mask_path)
+    img_path = root / subset / 'img'
+    full_path = root / subset / 'gt'
+    weak_path = root / subset / 'weak'
 
-    images.sort()
-    labels.sort()
+    images = sorted(img_path.glob("*.png"))
+    full_labels = sorted(full_path.glob("*.png"))
+    weak_labels = sorted(weak_path.glob("*.png"))
 
-    for it_im, it_gt in zip(images, labels):
-        item = (os.path.join(img_path, it_im), os.path.join(mask_path, it_gt))
-        items.append(item)
-
-    return items
+    return list(zip(images, full_labels, weak_labels))
 
 
 class SliceDataset(Dataset):
@@ -41,48 +35,39 @@ class SliceDataset(Dataset):
         self.augmentation: bool = augment
         self.equalize: bool = equalize
 
-        self.imgs = make_dataset(root_dir, subset)
+        self.files = make_dataset(root_dir, subset)
 
         print(f">> Created {subset} dataset with {len(self)} images...")
 
     def __len__(self):
-        return len(self.imgs)
-
-    def augment(self, img, mask):
-        if random() > 0.5:
-            img = ImageOps.flip(img)
-            mask = ImageOps.flip(mask)
-        if random() > 0.5:
-            img = ImageOps.mirror(img)
-            mask = ImageOps.mirror(mask)
-        if random() > 0.5:
-            angle = random() * 90 - 45
-            img = img.rotate(angle)
-            mask = mask.rotate(angle)
-        return img, mask
+        return len(self.files)
 
     def __getitem__(self, index) -> Dict[str, Union[Tensor, int, str]]:
-        img_path, mask_path = self.imgs[index]
+        img_path, gt_path, weak_path = self.files[index]
 
         img = Image.open(img_path)
-        mask = Image.open(mask_path)
+        mask = Image.open(gt_path)
+        weak_mask = Image.open(weak_path)
 
         if self.equalize:
             img = ImageOps.equalize(img)
 
-        if self.augmentation:
-            img, mask = self.augment(img, mask)
-
         if self.transform:
             img = self.transform(img)
             mask = self.mask_transform(mask)
+            weak_mask = self.mask_transform(weak_mask)
 
         _, W, H = img.shape
-        assert mask.shape == (2, W, H)
+        assert mask.shape == weak_mask.shape == (2, W, H)
+
+        # Circle: 8011
+        true_size = einsum("kwh->k", mask)
+        bounds = einsum("k,b->kb", true_size, torch.tensor([0.9, 1.1], dtype=torch.float32))
+        assert bounds.shape == (2, 2)  # binary, upper and lower bounds
 
         return {"img": img,
                 "full_mask": mask,
-                "weak_mask": mask,
-                "path": img_path,
-                "true_size": torch.tensor([0, 7845], dtype=torch.float32),
-                "bounds": torch.tensor([[-1, -1], [7845, 7845]], dtype=torch.float32)}
+                "weak_mask": weak_mask,
+                "path": str(img_path),
+                "true_size": true_size,
+                "bounds": bounds}
