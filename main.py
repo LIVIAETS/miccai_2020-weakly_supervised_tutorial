@@ -14,6 +14,7 @@ from torch.utils.data import DataLoader
 
 from utils.dataset import (SliceDataset)
 from utils.ShallowNet import (shallowCNN)
+from utils.residual_unet import ResidualUNet
 from utils.utils import (weights_init,
                          saveImages,
                          class2one_hot,
@@ -22,7 +23,8 @@ from utils.utils import (weights_init,
                          tqdm_,
                          dice_coef)
 
-from utils.losses import (PartialCrossEntropy,
+from utils.losses import (CrossEntropy,
+                          PartialCrossEntropy,
                           NaiveSizeLoss)
 
 
@@ -31,14 +33,16 @@ def setup(args) -> Tuple[nn.Module, Any, Any, DataLoader, DataLoader]:
     gpu: bool = args.gpu and torch.cuda.is_available()
     device = torch.device("cuda") if gpu else torch.device("cpu")
 
+    num_classes = 2
     if args.dataset == 'TOY':
-        num_classes = 2
         initial_kernels = 4
         print(">> Using a shallowCNN")
         net = shallowCNN(1, initial_kernels, num_classes)
         net.apply(weights_init)
     else:
-        raise NotImplementedError
+        print(">> Using a fully residual UNet")
+        net = ResidualUNet(1, num_classes)
+        net.init_weights()
     net.to(device)
 
     lr = 0.0005
@@ -91,7 +95,8 @@ def runTraining(args):
     print(f">>> Setting up to train on {args.dataset} with {args.mode}")
     net, optimizer, device, train_loader, val_loader = setup(args)
 
-    partial_ce = PartialCrossEntropy()
+    ce = CrossEntropy(idk=[0, 1])  # Supervise both background and foreground
+    partial_ce = PartialCrossEntropy()  # Supervise only foregroundz
     sizeLoss = NaiveSizeLoss()
 
     for i in range(args.epochs):
@@ -131,7 +136,10 @@ def runTraining(args):
             ce_val = partial_ce(segment_prob, weak_mask)
             log_ce[j] = ce_val.item()
 
-            if args.mode == 'unconstrained':  # or i <= 2:  # Trick to handle the fact that we kept only 10 training samples
+            if args.mode == 'full':
+                lossEpoch = ce(segment_prob, full_mask)
+                log_sizeloss[j] = 0
+            elif args.mode == 'unconstrained':
                 lossEpoch = ce_val
                 log_sizeloss[j] = 0
             else:
@@ -159,7 +167,7 @@ def main():
 
     parser.add_argument('--epochs', default=200, type=int)
     parser.add_argument('--dataset', default='TOY', choices=['TOY', 'PROMISE12'])
-    parser.add_argument('--mode', default='unconstrained', choices=['constrained', 'unconstrained'])
+    parser.add_argument('--mode', default='unconstrained', choices=['constrained', 'unconstrained', 'full'])
 
     parser.add_argument('--gpu', action='store_true')
 

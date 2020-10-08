@@ -6,10 +6,10 @@ import torch.nn.functional as F
 from .utils import simplex, sset
 
 
-class PartialCrossEntropy():
-    def __init__(self, **kwargs):
+class CrossEntropy():
+    def __init__(self, idk, **kwargs):
         # Self.idk is used to filter out some classes of the target mask. Use fancy indexing
-        self.idk = [1]
+        self.idk = idk
         print(f"Initialized {self.__class__.__name__} with {kwargs}")
 
     def __call__(self, probs, weak_target):
@@ -24,6 +24,11 @@ class PartialCrossEntropy():
         loss /= mask.sum() + 1e-10
 
         return loss
+
+
+class PartialCrossEntropy(CrossEntropy):
+    def __init__(self, **kwargs):
+        super().__init__(idk=[1], **kwargs)
 
 
 # ######## ------ Size loss function  (naive way) ---------- ###########
