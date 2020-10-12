@@ -126,29 +126,32 @@ def runTraining(args):
             assert one_hot(weak_mask), one_hot(weak_mask)
 
             logits = net(img)
-            segment_prob = F.softmax(5 * logits, dim=1)
-            segment_oh = probs2one_hot(segment_prob)
+            pred_softmax = F.softmax(5 * logits, dim=1)
+            pred_seg = probs2one_hot(pred_softmax)
 
-            pred_size = einsum("bkwh->bk", segment_oh)[:, 1]
+            pred_size = einsum("bkwh->bk", pred_seg)[:, 1]
             log_sizediff[j] = pred_size - data["true_size"][0, 1]
-            log_dice[j] = dice_coef(segment_oh, full_mask)[0, 1]  # 1st item, 2nd class
+            log_dice[j] = dice_coef(pred_seg, full_mask)[0, 1]  # 1st item, 2nd class
 
             if args.mode == 'full':
-                lossEpoch = ce_loss(segment_prob, full_mask)
-                log_ce[j] = lossEpoch.item()
+                ce_val = ce_loss(pred_softmax, full_mask)
+                log_ce[j] = ce_val.item()
 
                 log_sizeloss[j] = 0
-            elif args.mode == 'unconstrained':
-                ce_val = partial_ce(segment_prob, weak_mask)
-                log_ce[j] = ce_val.item()
+
                 lossEpoch = ce_val
-
-                log_sizeloss[j] = 0
-            else:
-                ce_val = partial_ce(segment_prob, weak_mask)
+            elif args.mode == 'unconstrained':
+                ce_val = partial_ce(pred_softmax, weak_mask)
                 log_ce[j] = ce_val.item()
 
-                sizeLoss_val = sizeLoss(segment_prob, bounds)
+                log_sizeloss[j] = 0
+
+                lossEpoch = ce_val
+            else:
+                ce_val = partial_ce(pred_softmax, weak_mask)
+                log_ce[j] = ce_val.item()
+
+                sizeLoss_val = sizeLoss(pred_softmax, bounds)
                 log_sizeloss[j] = sizeLoss_val.item()
 
                 lossEpoch = ce_val + sizeLoss_val
