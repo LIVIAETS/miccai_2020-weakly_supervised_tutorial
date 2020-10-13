@@ -14,7 +14,7 @@ lower bound <= predicted size <= upper bound
 ```
 where `predicted size` is the sum of all predicted probabilities (softmax) over the whole image.
 
-To make the example simpler, we will define the lower and upper bounds to 0.9 and 1.1 times the ground truth size.
+To make the example simpler, we will define the lower and upper bounds to 0.9 and 1.1 times the ground truth size. All the code is contained within the `code` folder
 
 #### Requirements
 The code has those following dependencies:
@@ -33,13 +33,13 @@ PIL
 ```
 
 #### Data
-The data for the toy example is stored in `data/TOY`. If you wish, you can regenerate the dataset with:
+The data for the toy example is stored in `code/data/TOY`. If you wish, you can regenerate the dataset with:
 ```
 make -B data/TOY
 ```
-or you can use [gen_toy.py](gen_toy.py) directly.
+or you can use [gen_toy.py](code/gen_toy.py) directly.
 
-Participants willing to try the PROMISE12 setting need to download the data themselves, then put the .zip inside the `data` folder (a list of files is available in `data/promise12.lineage`). Once the three files are there, the slicing into 2D png files is automated:
+Participants willing to try the PROMISE12 setting need to download the data themselves, then put the .zip inside the `code/data` folder (a list of files is available in `code/data/promise12.lineage`). Once the three files are there, the slicing into 2D png files is automated:
 ```
 make data/PROMISE12
 ```
