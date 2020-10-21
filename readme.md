@@ -3,6 +3,10 @@
 
 ![preview.gif](preview.gif)
 
+
+### Slides
+Slides from the three sessions are available in the [`slides/`](slides/) folder.
+
 ### Hands-on
 This repository contains the code of the hand-on tutorial, that runs on two datasets:
 * A very simple toy example
