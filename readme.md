@@ -1,16 +1,26 @@
 # MICCAI 2020 Tutorial
 ## Weakly Supervised CNN Segmentation: Models and Optimization
 
-![preview.gif](preview.gif)
+This repository contains the code of the hand-on tutorial, that runs on two datasets:
+* A very simple toy example
+* [PROMISE12](https://promise12.grand-challenge.org) prostate segmentation challenge
 
+Also founds, the slides and recordings of the tutorial.
 
 ### Slides
 Slides from the three sessions are available in the [`slides/`](slides/) folder.
 
+
+### Recordings
+* [Session 1](https://drive.google.com/file/d/1NVn2J4y6l7_Yxw6RGBD2CEIEedliccjQ/view?usp=sharing): Structure-driven priors: _Regularization_
+* [Session 2](https://drive.google.com/file/d/1wAVxBk4U45-SZhDWviCgFShytf0wrJze/view?usp=sharing): Knowledge-driven priors (e.g., anatomy): _Constraints_
+* [Session 3](https://drive.google.com/file/d/1EohLWWa5vMmEMxw3Rqk4eYaDzbr_Clp2/view?usp=sharing): Data-driven priors: _Adversarial learning_
+* [Session 4](https://drive.google.com/file/d/1NMU7z0KhXYX6idgCBehdaNVAifOE6Ey3/view?usp=sharing): Hands-on: _Size constraints_
+
+
+
 ### Hands-on
-This repository contains the code of the hand-on tutorial, that runs on two datasets:
-* A very simple toy example
-* [PROMISE12](https://promise12.grand-challenge.org) prostate segmentation challenge
+![preview.gif](preview.gif)
 
 The goal here is to enforce some inequality constraints on the size of the predicted segmentation in the form:
 ```
